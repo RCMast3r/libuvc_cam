@@ -24,8 +24,11 @@
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <algorithm>
+
 #include <memory>
 #include <string>
+#include <iterator>
 
 using libuvc_cam::StreamFormat;
 
@@ -35,13 +38,13 @@ namespace libuvc_cam
 UvcCameraNode::UvcCameraNode(const rclcpp::NodeOptions & options)
 : rclcpp::Node("uvc_camera_node", options)
 {
-  auto vendor_id_param = declare_parameter<std::string>("vendor_id", "");
-  auto product_id_param = declare_parameter<std::string>("product_id", "");
+  auto vendor_id_param = declare_parameter<std::string>("vendor_id", "0x046d");
+  auto product_id_param = declare_parameter<std::string>("product_id", "0x0825");
   std::string serial_num = declare_parameter<std::string>("serial_num", "");
-  std::string frame_fmt_string = declare_parameter<std::string>("frame_fmt", "");
+  std::string frame_fmt_string = declare_parameter<std::string>("frame_fmt", "UNCOMPRESSED");
   int requested_width = declare_parameter("image_width", 0);
   int requested_height = declare_parameter("image_height", 0);
-  int requested_frame_rate = declare_parameter("frames_per_second", 0);
+  int requested_frame_rate = declare_parameter("frames_per_second", 30);
   m_frame = declare_parameter<std::string>("frame_id", "camera");
 
   // if (vendor_id_param.get_type() == rclcpp::PARAMETER_NOT_SET) {
@@ -121,6 +124,13 @@ void UvcCameraNode::frame_callback(UvcFrame * frame)
   img.height = frame->height;
   img.width = frame->width;
   img.step = frame->step;
+  img.data.resize(frame->data.size());
+  // std::memcpy(&(image.data[0]), frame->data, frame->data_bytes);
+  // std::copy(frame->data.begin(), frame->data.end(), std::back_inserter(img.data));
+  for(std::size_t i =0; i< frame->data.size(); i++)
+  {
+    img.data[i] = frame->data[i];
+  }
 
   switch (frame->frame_format) {
     case UvcFrameFormat::YUYV:
@@ -167,7 +177,7 @@ void UvcCameraNode::frame_callback(UvcFrame * frame)
       // Not supported
       break;
   }
-
+  // img.data = 
   m_image_pub.publish(img);
 }
 
