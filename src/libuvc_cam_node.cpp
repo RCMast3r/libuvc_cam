@@ -35,8 +35,8 @@ namespace libuvc_cam
 UvcCameraNode::UvcCameraNode(const rclcpp::NodeOptions & options)
 : rclcpp::Node("uvc_camera_node", options)
 {
-  auto vendor_id_param = declare_parameter("vendor_id");
-  auto product_id_param = declare_parameter("product_id");
+  auto vendor_id_param = declare_parameter<std::string>("vendor_id", "");
+  auto product_id_param = declare_parameter<std::string>("product_id", "");
   std::string serial_num = declare_parameter<std::string>("serial_num", "");
   std::string frame_fmt_string = declare_parameter<std::string>("frame_fmt", "");
   int requested_width = declare_parameter("image_width", 0);
@@ -44,11 +44,11 @@ UvcCameraNode::UvcCameraNode(const rclcpp::NodeOptions & options)
   int requested_frame_rate = declare_parameter("frames_per_second", 0);
   m_frame = declare_parameter<std::string>("frame_id", "camera");
 
-  if (vendor_id_param.get_type() == rclcpp::PARAMETER_NOT_SET) {
-    throw rclcpp::exceptions::InvalidParameterValueException{"vendor_id is missing."};
-  } else if (product_id_param.get_type() == rclcpp::PARAMETER_NOT_SET) {
-    throw rclcpp::exceptions::InvalidParameterValueException{"product_id is missing."};
-  }
+  // if (vendor_id_param.get_type() == rclcpp::PARAMETER_NOT_SET) {
+  //   throw rclcpp::exceptions::InvalidParameterValueException{"vendor_id is missing."};
+  // } else if (product_id_param.get_type() == rclcpp::PARAMETER_NOT_SET) {
+  //   throw rclcpp::exceptions::InvalidParameterValueException{"product_id is missing."};
+  // }
 
   StreamFormat requested_fmt = StreamFormat::ANY;
 
@@ -66,8 +66,8 @@ UvcCameraNode::UvcCameraNode(const rclcpp::NodeOptions & options)
   }
 
   m_camera = std::make_unique<UvcCamera>(
-    vendor_id_param.get<std::string>(),
-    product_id_param.get<std::string>(),
+    vendor_id_param,
+    product_id_param,
     serial_num);
 
   // Register callback
